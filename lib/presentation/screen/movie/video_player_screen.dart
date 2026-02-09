@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:wouritv/presentation/screen/auth/auth_gate.dart';
-import 'package:wouritv/presentation/screen/movie/premium_video_player_screen.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
 import 'package:wouritv/config/providers.dart';
 import 'package:wouritv/config/setting.dart';
 import 'package:wouritv/domain/entitie/contenu_entity.dart';
@@ -18,6 +15,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
   final String movieTitle;
   final int movieId;
   final bool startFromBeginning;
+  final bool isPremium; // Nouveau: indique si c'est une vidéo premium
 
   const VideoPlayerScreen({
     super.key,
@@ -25,6 +23,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
     required this.movieTitle,
     required this.movieId,
     this.startFromBeginning = false,
+    this.isPremium = false, // Par défaut, vidéo gratuite
   });
 
   @override
@@ -33,12 +32,9 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
 
 class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   YoutubePlayerController? _controller;
-  VideoPlayerController? _videoPlayerController;
-  ChewieController? _chewieController;
   bool _isControlsVisible = true;
   bool _isPlaying = false;
   bool _isInitializing = true; // État de chargement
-  bool _isPremiumContent = false; // Type de contenu
   Timer? _progressTimer;
   Timer? _hideControlsTimer;
   Timer? _backupSaveTimer; // Sauvegarde de sécurité toutes les 60s
@@ -74,14 +70,13 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   Future<void> _initializePlayer() async {
     developer.log('🚀🚀🚀 DEBUT _initializePlayer 🚀🚀🚀', name: 'VideoPlayerScreen');
     
-    // Le videoId est directement l'ID YouTube, pas une URL complète
+    // Le videoId est directement l'ID YouTube
     String? videoId = widget.content.videoId;
     
     developer.log('📹 VideoId reçu: $videoId', name: 'VideoPlayerScreen');
     
     if (videoId == null || videoId.isEmpty) {
       developer.log('❌ VideoId null ou vide - fermeture', name: 'VideoPlayerScreen');
-      // Gérer le cas où l'ID n'est pas valide
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -94,13 +89,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       return;
     }
 
-    // Vérifier si c'est un chemin S3 (contenu premium)
-    // Les vidéos YouTube sont des IDs courts (ex: "dQw4w9WgXcQ")
-    // Les vidéos S3 sont des chemins (ex: "premium/film-1.mp4" ou "film-1.mp4")
-    final bool isPremiumContent = videoId.contains('/') || videoId.contains('.mp4') || videoId.contains('.m3u8');
-    
-    if (isPremiumContent) {
-      developer.log('🔐 Contenu premium S3 détecté: $videoId', name: 'VideoPlayerScreen');
+    // Vérification de la possession pour les vidéos premium
+    if (widget.isPremium) {
+      developer.log('🔐 Contenu premium détecté - vérification de l\'achat...', name: 'VideoPlayerScreen');
       
       try {
         final authService = ref.read(authServiceProvider);
@@ -120,48 +111,32 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           return;
         }
 
-        // Obtenir l'URL signée CloudFront à partir du chemin S3
+        // Vérifier si l'utilisateur possède ce film premium
         final premiumService = ref.read(premiumVideoServiceProvider);
-        final signedUrl = await premiumService.getSignedUrl(
+        final hasPurchased = await premiumService.hasUserPurchased(
           movieId: widget.movieId.toString(),
-          s3Path: videoId,
+          userId: userId,
         );
         
-        if (signedUrl == null) {
-          developer.log('❌ Impossible d\'obtenir l\'URL signée CloudFront', name: 'VideoPlayerScreen');
+        if (!hasPurchased) {
+          developer.log('❌ Utilisateur n\'a pas acheté ce contenu premium', name: 'VideoPlayerScreen');
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Navigator.of(context).pop();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Accès refusé : vous devez acheter ce contenu premium'),
                 backgroundColor: Colors.red,
+                duration: Duration(seconds: 4),
               ),
             );
           });
           return;
         }
         
-        developer.log('✅ URL CloudFront signée obtenue: ${signedUrl.substring(0, 50)}...', name: 'VideoPlayerScreen');
-        
-        // Rediriger vers le lecteur premium
-        developer.log('🎬 Redirection vers le lecteur premium', name: 'VideoPlayerScreen');
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => PremiumVideoPlayerScreen(
-                content: widget.content,
-                movieTitle: widget.movieTitle,
-                movieId: widget.movieId,
-                cloudFrontUrl: signedUrl,
-                startFromBeginning: widget.startFromBeginning,
-              ),
-            ),
-          );
-        });
-        return;
+        developer.log('✅ Vérification réussie - utilisateur possède le contenu premium', name: 'VideoPlayerScreen');
       } catch (e, stackTrace) {
         developer.log(
-          '❌ Erreur lors de la génération de l\'URL signée: $e',
+          '❌ Erreur lors de la vérification de l\'achat: $e',
           error: e,
           stackTrace: stackTrace,
           name: 'VideoPlayerScreen',

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -37,7 +38,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _authStream = _authService.authStateChanges;
     _authStream.listen((authState) {
       developer.log(
-        'LoginScreen - AuthStateChange: ${authState.event}, User: ${authState.session?.user?.id ?? "null"}',
+        'LoginScreen - AuthStateChange: ${authState.event}, User: ${authState.session?.user.id ?? "null"}',
         name: 'LoginScreen',
       );
       
@@ -50,8 +51,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           name: 'LoginScreen',
         );
         
+        // Arrêter le loading
+        if (_isLoading) {
+          setState(() => _isLoading = false);
+        }
+        
         // Pop pour revenir à AuthGate qui affichera automatiquement le Dashboard
-        Navigator.of(context).pop();
+        // Note: LaunchMode.externalApplication ouvre Safari/Chrome (mobile) ou nouvelle fenêtre (web)
+        // L'utilisateur revient automatiquement à l'app après le callback du deep link
+        Navigator.of(context, rootNavigator: true).pop();
       }
     });
   }
@@ -78,7 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           data: {
             'full_name': _fullNameController.text.trim(),
           },
-          emailRedirectTo: null, // Désactive la redirection pour mobile
+          emailRedirectTo: kIsWeb ? null : 'io.supabase.wouritv://login-callback/',
         );
 
         developer.log(
@@ -145,29 +153,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final success = await _authService.signInWithGoogle();
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.google_signin_progress),
-            backgroundColor: Colors.blue,
-          ),
-        );
-        
-        // Vérifier périodiquement si l'utilisateur est connecté (max 10s)
-        for (int i = 0; i < 20; i++) {
-          await Future.delayed(const Duration(milliseconds: 500));
-          final user = _authService.currentUser;
-          if (user != null && mounted) {
-            developer.log(
-              'Session Google détectée, redirection vers home',
-              name: 'LoginScreen',
-            );
-            Navigator.of(context).pushReplacementNamed('/home');
-            return;
-          }
-        }
-      }
+      await _authService.signInWithGoogle();
+      // L'authStateChanges listener gèrera automatiquement la navigation
+      developer.log(
+        'OAuth Google initié - authStateChanges gèrera la suite',
+        name: 'LoginScreen',
+      );
     } catch (e, stackTrace) {
       developer.log(
         'Erreur lors de la connexion Google',
@@ -182,9 +173,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             backgroundColor: Colors.red,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
         setState(() => _isLoading = false);
       }
     }
@@ -198,41 +186,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         'Démarrage connexion Apple',
         name: 'LoginScreen',
       );
-      final success = await _authService.signInWithApple();
+      await _authService.signInWithApple();
       
       developer.log(
-        'Retour signInWithApple: success=$success',
+        'OAuth Apple initié - authStateChanges gèrera la suite',
         name: 'LoginScreen',
       );
-      
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.apple_signin_progress),
-            backgroundColor: Colors.blue,
-          ),
-        );
-        
-        // Attendre le callback OAuth et vérifier la session
-        developer.log(
-          'OAuth Apple initié - en attente du callback',
-          name: 'LoginScreen',
-        );
-        
-        // Vérifier périodiquement si l'utilisateur est connecté (max 10s)
-        for (int i = 0; i < 20; i++) {
-          await Future.delayed(const Duration(milliseconds: 500));
-          final user = _authService.currentUser;
-          if (user != null && mounted) {
-            developer.log(
-              'Session Apple détectée, redirection vers home',
-              name: 'LoginScreen',
-            );
-            Navigator.of(context).pushReplacementNamed('/home');
-            return;
-          }
-        }
-      }
     } catch (e, stackTrace) {
       developer.log(
         'Erreur lors de la connexion Apple',
@@ -241,16 +200,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         name: 'LoginScreen',
       );
       if (mounted) {
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.error_apple(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
         setState(() => _isLoading = false);
       }
     }

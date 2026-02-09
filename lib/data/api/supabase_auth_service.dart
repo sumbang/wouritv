@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:developer' as developer;
 
 /// Service d'authentification pour Supabase
@@ -46,7 +47,8 @@ class SupabaseAuthService {
       
       final response = await _client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: 'io.supabase.wouritv://login-callback/',
+        redirectTo: kIsWeb ? null : 'io.supabase.wouritv://login-callback/',
+        authScreenLaunchMode: LaunchMode.externalApplication,
       );
       
       developer.log('✅ signInWithOAuth retourné: $response', name: 'SupabaseAuthService');
@@ -64,7 +66,8 @@ class SupabaseAuthService {
       
       final response = await _client.auth.signInWithOAuth(
         OAuthProvider.apple,
-        redirectTo: 'io.supabase.wouritv://login-callback/',
+        redirectTo: kIsWeb ? null : 'io.supabase.wouritv://login-callback/',
+        authScreenLaunchMode: LaunchMode.externalApplication,
       );
       
       developer.log('✅ signInWithOAuth retourné: $response', name: 'SupabaseAuthService');
@@ -79,10 +82,11 @@ class SupabaseAuthService {
   Future<bool> signInWithFacebook() async {
     try {
       developer.log('🔐 Démarrage OAuth Facebook', name: 'SupabaseAuthService');
-      
+      developer.log('🔐 redirectTo utilisé: ${kIsWeb ? "null (web)" : "io.supabase.wouritv://login-callback/ (mobile)"}', name: 'SupabaseAuthService');
       final response = await _client.auth.signInWithOAuth(
         OAuthProvider.facebook,
         // Ne pas spécifier redirectTo sur mobile - utilise le deep link configuré
+        redirectTo: kIsWeb ? null : 'io.supabase.wouritv://login-callback/',
       );
       
       developer.log('✅ signInWithOAuth retourné: $response', name: 'SupabaseAuthService');

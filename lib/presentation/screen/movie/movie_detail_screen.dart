@@ -97,16 +97,24 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
-  /// Convertir le temps HH:MM:SS en secondes
+  /// Convertir le temps HH:MM:SS ou MM:SS en secondes
   int _timeToSeconds(String time) {
     final parts = time.split(':');
-    if (parts.length != 3) return 0;
     
-    final hours = int.tryParse(parts[0]) ?? 0;
-    final minutes = int.tryParse(parts[1]) ?? 0;
-    final seconds = int.tryParse(parts[2]) ?? 0;
+    if (parts.length == 3) {
+      // Format HH:MM:SS
+      final hours = int.tryParse(parts[0]) ?? 0;
+      final minutes = int.tryParse(parts[1]) ?? 0;
+      final seconds = int.tryParse(parts[2]) ?? 0;
+      return hours * 3600 + minutes * 60 + seconds;
+    } else if (parts.length == 2) {
+      // Format MM:SS
+      final minutes = int.tryParse(parts[0]) ?? 0;
+      final seconds = int.tryParse(parts[1]) ?? 0;
+      return minutes * 60 + seconds;
+    }
     
-    return hours * 3600 + minutes * 60 + seconds;
+    return 0; // Format invalide
   }
 
   /// Formater les secondes en temps lisible (ex: "1h 30min" ou "45min")
@@ -1041,9 +1049,13 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
       return const SizedBox.shrink();
     }
 
+    
+    developer.log('Calcul de la progression pour le contenu: ${content.id} - lastReading: ${content.lastReading}, duree: ${content.duree}', name: 'MovieDetailScreen');
+  
     final watchedSeconds = _timeToSeconds(content.lastReading!);
     final totalSeconds = _timeToSeconds(content.duree!); // Utiliser _timeToSeconds au lieu de int.tryParse
-    
+  
+
     if (totalSeconds == 0) {
       developer.log('Durée totale nulle pour le contenu: ${content.id}', name: 'MovieDetailScreen');
       return const SizedBox.shrink();
