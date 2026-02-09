@@ -1,0 +1,84 @@
+{
+  "project_info": {
+    "project_number": "72789050659",
+    "project_id": "wouri-tv-f3c47",
+    "storage_bucket": "wouri-tv-f3c47.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72789050659:android:03594e0211fed77295f896",
+        "android_client_info": {
+          "package_name": "com.example.wouritv"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "72789050659-08lf36t874r5jufkkq0qq183l7cnqnb6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUBvSwhDnDIej_DXOiA9jqpcRIwNi7MWY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "72789050659-08lf36t874r5jufkkq0qq183l7cnqnb6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "72789050659-8h2t7laml3ko5m8mrod586aa7vkm6s5p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "ios.apps.wouri.tv",
+                "app_store_id": "1450210106"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72789050659:android:36ba2694a61d909795f896",
+        "android_client_info": {
+          "package_name": "mobile.apps.wouri"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "72789050659-08lf36t874r5jufkkq0qq183l7cnqnb6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUBvSwhDnDIej_DXOiA9jqpcRIwNi7MWY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "72789050659-08lf36t874r5jufkkq0qq183l7cnqnb6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "72789050659-8h2t7laml3ko5m8mrod586aa7vkm6s5p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "ios.apps.wouri.tv",
+                "app_store_id": "1450210106"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
