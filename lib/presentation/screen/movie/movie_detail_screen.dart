@@ -61,7 +61,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
       developer.log('📦 Nombre de contenus: ${movieDetails.contents.length}', name: 'MovieDetailScreen');
       developer.log('📋 Film dans la liste: ${movieDetails.isInList}', name: 'MovieDetailScreen');
       developer.log('👍 Recommandation utilisateur: ${movieDetails.userRecommendation}', name: 'MovieDetailScreen');
-      developer.log('📦 Duree de lecture : ${movieDetails.contents.first.lastReading}', name: 'MovieDetailScreen');
+      developer.log('📦 Duree de lecture : ${movieDetails.contents.isNotEmpty ? movieDetails.contents.first.lastReading : "Aucun contenu"}', name: 'MovieDetailScreen');
       
       if (mounted) {
         setState(() {
@@ -606,7 +606,8 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                           ),
                           
                           // Barre de progression si lastReading existe
-                          if (_movieDetails!.contents.isNotEmpty && _movieDetails!.contents.first.lastReading != null) ...[
+                        
+                          if (_movieDetails != null && _movieDetails!.contents.isNotEmpty && _movieDetails!.contents.first.lastReading != null) ...[
                             const SizedBox(height: 12),
                             _buildProgressBar(_movieDetails!.contents.first, l10n),
                           ],
