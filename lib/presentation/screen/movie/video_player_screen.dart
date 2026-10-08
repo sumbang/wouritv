@@ -1,13 +1,15 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:wouritv/presentation/screen/auth/auth_gate.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:wouritv/config/providers.dart';
 import 'package:wouritv/config/setting.dart';
 import 'package:wouritv/domain/entitie/contenu_entity.dart';
 import 'package:wouritv/domain/entitie/lecture_entity.dart';
+
 import 'dart:developer' as developer;
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
@@ -32,6 +34,9 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
 
 class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   YoutubePlayerController? _controller;
+  StreamSubscription<YoutubePlayerValue>? _playerSubscription;
+  StreamSubscription<YoutubeVideoState>? _positionSubscription;
+  Duration _position = Duration.zero;
   bool _isControlsVisible = true;
   bool _isPlaying = false;
   bool _isInitializing = true; // État de chargement
@@ -42,14 +47,15 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   int _totalWatchedTime = 0; // Temps total cumulé (ne se réinitialise jamais)
   int _lastVideoPosition = 0; // Position précédente dans la vidéo
   int _lastSavedDuration = 0;
-  
+
   // Stocker la référence au use case pour l'utiliser dans dispose()
   dynamic _updateDurationUseCase;
+  dynamic _completeLectureUseCase;
 
   @override
   void initState() {
     super.initState();
-    
+
     developer.log(
       '🎬 INIT VideoPlayerScreen:\n'
       '   - startFromBeginning: ${widget.startFromBeginning}\n'
@@ -57,27 +63,35 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       '   - lastReading: ${widget.content.lastReading}',
       name: 'VideoPlayerScreen',
     );
-    
+
     // Sauvegarder la référence au use case pour pouvoir l'utiliser dans dispose()
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _updateDurationUseCase = ref.read(updateLectureDurationUseCaseProvider);
+        _completeLectureUseCase = ref.read(completeLectureUseCaseProvider);
       }
     });
     _initializePlayer();
   }
 
   Future<void> _initializePlayer() async {
-    developer.log('🚀🚀🚀 DEBUT _initializePlayer 🚀🚀🚀', name: 'VideoPlayerScreen');
-    
+    developer.log(
+      '🚀🚀🚀 DEBUT _initializePlayer 🚀🚀🚀',
+      name: 'VideoPlayerScreen',
+    );
+
     // Le videoId est directement l'ID YouTube
     String? videoId = widget.content.videoId;
-    
+
     developer.log('📹 VideoId reçu: $videoId', name: 'VideoPlayerScreen');
-    
+
     if (videoId == null || videoId.isEmpty) {
-      developer.log('❌ VideoId null ou vide - fermeture', name: 'VideoPlayerScreen');
+      developer.log(
+        '❌ VideoId null ou vide - fermeture',
+        name: 'VideoPlayerScreen',
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -91,19 +105,28 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
     // Vérification de la possession pour les vidéos premium
     if (widget.isPremium) {
-      developer.log('🔐 Contenu premium détecté - vérification de l\'achat...', name: 'VideoPlayerScreen');
-      
+      developer.log(
+        '🔐 Contenu premium détecté - vérification de l\'achat...',
+        name: 'VideoPlayerScreen',
+      );
+
       try {
         final authService = ref.read(authServiceProvider);
         final userId = authService.currentUser?.id;
-        
+
         if (userId == null) {
-          developer.log('❌ Utilisateur non connecté', name: 'VideoPlayerScreen');
+          developer.log(
+            '❌ Utilisateur non connecté',
+            name: 'VideoPlayerScreen',
+          );
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
             Navigator.of(context).pop();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Vous devez être connecté pour accéder à ce contenu premium'),
+                content: Text(
+                  'Vous devez être connecté pour accéder à ce contenu premium',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -117,14 +140,20 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           movieId: widget.movieId.toString(),
           userId: userId,
         );
-        
+
         if (!hasPurchased) {
-          developer.log('❌ Utilisateur n\'a pas acheté ce contenu premium', name: 'VideoPlayerScreen');
+          developer.log(
+            '❌ Utilisateur n\'a pas acheté ce contenu premium',
+            name: 'VideoPlayerScreen',
+          );
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
             Navigator.of(context).pop();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Accès refusé : vous devez acheter ce contenu premium'),
+                content: Text(
+                  'Accès refusé : vous devez acheter ce contenu premium',
+                ),
                 backgroundColor: Colors.red,
                 duration: Duration(seconds: 4),
               ),
@@ -132,8 +161,11 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           });
           return;
         }
-        
-        developer.log('✅ Vérification réussie - utilisateur possède le contenu premium', name: 'VideoPlayerScreen');
+
+        developer.log(
+          '✅ Vérification réussie - utilisateur possède le contenu premium',
+          name: 'VideoPlayerScreen',
+        );
       } catch (e, stackTrace) {
         developer.log(
           '❌ Erreur lors de la vérification de l\'achat: $e',
@@ -142,6 +174,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           name: 'VideoPlayerScreen',
         );
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -158,7 +191,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     try {
       final authService = ref.read(authServiceProvider);
       final userId = authService.currentUser?.id;
-      
+
       developer.log(
         '=== DEBUT INIT LECTURE ===\n'
         '   - VideoId: ${widget.content.videoId}\n'
@@ -166,29 +199,42 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         '   - MovieId: ${widget.movieId}',
         name: 'VideoPlayerScreen',
       );
-      
+
       if (userId == null) {
-        developer.log('❌ ECHEC: Utilisateur non connecté - lecture sans sync', name: 'VideoPlayerScreen');
-      } else if (widget.content.videoId == null || widget.content.videoId!.isEmpty) {
-        developer.log('❌ ECHEC: VideoId invalide - lecture sans sync', name: 'VideoPlayerScreen');
+        developer.log(
+          '❌ ECHEC: Utilisateur non connecté - lecture sans sync',
+          name: 'VideoPlayerScreen',
+        );
+      } else if (widget.content.videoId == null ||
+          widget.content.videoId!.isEmpty) {
+        developer.log(
+          '❌ ECHEC: VideoId invalide - lecture sans sync',
+          name: 'VideoPlayerScreen',
+        );
       } else {
-        developer.log('🚀 Appel getOrCreateLectureUseCase...', name: 'VideoPlayerScreen');
-        
-        final getOrCreateLectureUseCase = ref.read(getOrCreateLectureUseCaseProvider);
+        developer.log(
+          '🚀 Appel getOrCreateLectureUseCase...',
+          name: 'VideoPlayerScreen',
+        );
+
+        final getOrCreateLectureUseCase = ref.read(
+          getOrCreateLectureUseCaseProvider,
+        );
         _currentLecture = await getOrCreateLectureUseCase.execute(
           videoId: widget.content.videoId!,
           userId: userId,
         );
-        
+
         if (_currentLecture != null) {
           _totalWatchedTime = _currentLecture!.duree;
           _lastSavedDuration = _currentLecture!.duree;
-          
+
           // Si on reprend la lecture (pas depuis le début), initialiser la position
-          if (!widget.startFromBeginning && _currentLecture!.lastReading != null) {
+          if (!widget.startFromBeginning &&
+              _currentLecture!.lastReading != null) {
             _lastVideoPosition = _timeToSeconds(_currentLecture!.lastReading!);
           }
-          
+
           developer.log(
             '✅ LECTURE INITIALISEE:\n'
             '   - ID: ${_currentLecture!.id}\n'
@@ -199,7 +245,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
             name: 'VideoPlayerScreen',
           );
         } else {
-          developer.log('❌ ECHEC: _currentLecture est null après execute()', name: 'VideoPlayerScreen');
+          developer.log(
+            '❌ ECHEC: _currentLecture est null après execute()',
+            name: 'VideoPlayerScreen',
+          );
         }
       }
     } catch (e, stackTrace) {
@@ -213,45 +262,47 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       );
     }
 
-    _controller = YoutubePlayerController(
-      initialVideoId: videoId,
-      flags: const YoutubePlayerFlags(
-        autoPlay: true,
+    if (!mounted) return;
+
+    _position = Duration(seconds: _lastVideoPosition);
+    _controller = YoutubePlayerController.fromVideoId(
+      videoId: videoId,
+      autoPlay: true,
+      startSeconds: widget.startFromBeginning
+          ? 0
+          : _lastVideoPosition.toDouble(),
+      params: const YoutubePlayerParams(
         mute: false,
         enableCaption: false,
-        hideControls: true,
-        useHybridComposition: false, // Réduire les logs WebView
+        showControls: false,
+        showFullscreenButton: false,
       ),
-    )..addListener(() {
-        if (mounted) {
-          final wasPlaying = _isPlaying;
-          final isNowPlaying = _controller!.value.isPlaying;
-          
-          setState(() {
-            _isPlaying = isNowPlaying;
-          });
-          
-          // Sauvegarder quand la vidéo passe en pause
-          if (wasPlaying && !isNowPlaying && _currentLecture != null) {
-            developer.log('⏸️ Vidéo mise en pause - sauvegarde...', name: 'VideoPlayerScreen');
-            _saveProgress();
-          }
-        }
-      });
-    
-    // Reprendre où l'utilisateur s'était arrêté sera géré dans onReady()
+    );
+    _playerSubscription = _controller!.stream.listen((value) {
+      if (!mounted) return;
+      final wasPlaying = _isPlaying;
+      final isNowPlaying = value.playerState == PlayerState.playing;
+      setState(() => _isPlaying = isNowPlaying);
+      if (wasPlaying && !isNowPlaying && _currentLecture != null) {
+        unawaited(_saveProgress());
+      }
+    });
+    _positionSubscription = _controller!.videoStateStream.listen((value) {
+      if (mounted) setState(() => _position = value.position);
+    });
+
     developer.log(
-      '🔍 VERIFICATION REPRISE PREPAREE:\n'
-      '   - _lastVideoPosition: ${_lastVideoPosition}s\n'
-      '   - widget.startFromBeginning: ${widget.startFromBeginning}\n'
-      '   - Reprise sera effectuée dans onReady()',
+      'Position initiale du lecteur : ${_position.inSeconds}s',
       name: 'VideoPlayerScreen',
     );
 
     // Démarrage du timer de progression locale
-    developer.log('🚀 Démarrage du timer de progression locale...', name: 'VideoPlayerScreen');
+    developer.log(
+      '🚀 Démarrage du timer de progression locale...',
+      name: 'VideoPlayerScreen',
+    );
     _startProgressTimer();
-    
+
     // Démarrage du timer de sauvegarde de sécurité (60s)
     _startBackupSaveTimer();
 
@@ -264,7 +315,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       DeviceOrientation.landscapeRight,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    
+
     // Marquer l'initialisation comme terminée
     setState(() {
       _isInitializing = false;
@@ -276,25 +327,38 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     _progressTimer?.cancel();
     _hideControlsTimer?.cancel();
     _backupSaveTimer?.cancel();
-    
+
     // Sauvegarder la position actuelle avant de quitter
     if (_currentLecture != null && _controller != null) {
-      final currentPosition = _controller!.value.position.inSeconds;
+      final currentPosition = _position.inSeconds;
       if (currentPosition != _lastSavedDuration) {
-        developer.log('💾 Tentative de sauvegarde finale - Position: ${currentPosition}s', name: 'VideoPlayerScreen');
-        _saveProgress().then((_) {
-          developer.log('✅ Sauvegarde finale terminée', name: 'VideoPlayerScreen');
-        }).catchError((e) {
-          developer.log('❌ Erreur sauvegarde finale: $e', name: 'VideoPlayerScreen');
-        });
+        developer.log(
+          '💾 Tentative de sauvegarde finale - Position: ${currentPosition}s',
+          name: 'VideoPlayerScreen',
+        );
+        _saveProgress()
+            .then((_) {
+              developer.log(
+                '✅ Sauvegarde finale terminée',
+                name: 'VideoPlayerScreen',
+              );
+            })
+            .catchError((e) {
+              developer.log(
+                '❌ Erreur sauvegarde finale: $e',
+                name: 'VideoPlayerScreen',
+              );
+            });
       }
-      
+
       // Marquer la lecture comme terminée avec la date/heure de fermeture
       _markVideoAsCompleted();
     }
-    
-    _controller?.dispose();
-    
+
+    unawaited(_playerSubscription?.cancel());
+    unawaited(_positionSubscription?.cancel());
+    unawaited(_controller?.close());
+
     // Restaurer l'orientation normale et les contrôles système
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -312,19 +376,20 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   void _startProgressTimer() {
     // Timer pour mettre à jour la durée cumulée chaque seconde
     _progressTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_controller != null && _controller!.value.isPlaying) {
-        final currentPosition = _controller!.value.position.inSeconds;
+      if (_controller != null && _isPlaying) {
+        final currentPosition = _position.inSeconds;
         final positionDiff = currentPosition - _lastVideoPosition;
-        
+
         // Incrémenter le temps cumulé uniquement si la lecture avance
-        if (positionDiff > 0 && positionDiff < 5) { // Ignorer les sauts > 5s (seek)
+        if (positionDiff > 0 && positionDiff < 5) {
+          // Ignorer les sauts > 5s (seek)
           setState(() {
             _totalWatchedTime += positionDiff;
           });
         }
-        
+
         _lastVideoPosition = currentPosition;
-        
+
         // Log toutes les 10 secondes pour éviter trop de logs
         if (currentPosition % 10 == 0) {
           developer.log(
@@ -334,24 +399,33 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         }
       }
     });
-    
-    developer.log('✅ Timer de progression locale démarré (1s)', name: 'VideoPlayerScreen');
+
+    developer.log(
+      '✅ Timer de progression locale démarré (1s)',
+      name: 'VideoPlayerScreen',
+    );
   }
-  
+
   void _startBackupSaveTimer() {
     // Timer de sécurité: sauvegarder toutes les 60s pendant la lecture
     _backupSaveTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
       if (_currentLecture != null && _controller != null) {
-        final currentPosition = _controller!.value.position.inSeconds;
+        final currentPosition = _position.inSeconds;
         // Sauvegarder si la position a changé depuis la dernière sauvegarde
         if (currentPosition != _lastSavedDuration) {
-          developer.log('💾 Sauvegarde de sécurité (60s) - Position: ${currentPosition}s', name: 'VideoPlayerScreen');
+          developer.log(
+            '💾 Sauvegarde de sécurité (60s) - Position: ${currentPosition}s',
+            name: 'VideoPlayerScreen',
+          );
           _saveProgress();
         }
       }
     });
-    
-    developer.log('✅ Timer de sauvegarde de sécurité démarré (60s)', name: 'VideoPlayerScreen');
+
+    developer.log(
+      '✅ Timer de sauvegarde de sécurité démarré (60s)',
+      name: 'VideoPlayerScreen',
+    );
   }
 
   void _startHideControlsTimer() {
@@ -369,7 +443,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     setState(() {
       _isControlsVisible = !_isControlsVisible;
     });
-    
+
     // Si on affiche les contrôles, relancer le timer pour les masquer après 10s
     if (_isControlsVisible) {
       _startHideControlsTimer();
@@ -380,13 +454,16 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
   Future<void> _saveProgress() async {
     if (_currentLecture == null || _controller == null) {
-      developer.log('⚠️ Aucune lecture en cours - skip save', name: 'VideoPlayerScreen');
+      developer.log(
+        '⚠️ Aucune lecture en cours - skip save',
+        name: 'VideoPlayerScreen',
+      );
       return;
     }
 
     try {
-      final currentPosition = _controller!.value.position.inSeconds;
-      
+      final currentPosition = _position.inSeconds;
+
       developer.log(
         '💾 DEBUT SAUVEGARDE:\n'
         '   - Lecture ID: ${_currentLecture!.id}\n'
@@ -395,15 +472,18 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         '   - Dernière sauvegarde: ${_lastSavedDuration}s',
         name: 'VideoPlayerScreen',
       );
-      
+
       // Utiliser la référence stockée ou lire depuis ref si toujours monté
-      final updateDurationUseCase = _updateDurationUseCase ?? ref.read(updateLectureDurationUseCaseProvider);
+      final updateDurationUseCase =
+          _updateDurationUseCase ??
+          ref.read(updateLectureDurationUseCaseProvider);
       await updateDurationUseCase.execute(
         lectureId: _currentLecture!.id,
         duree: currentPosition, // Sauvegarder uniquement la position actuelle
       );
-      _lastSavedDuration = currentPosition; // Mettre à jour avec la position sauvegardée
-      
+      _lastSavedDuration =
+          currentPosition; // Mettre à jour avec la position sauvegardée
+
       developer.log(
         '✅ SAUVEGARDE REUSSIE: Position ${currentPosition}s sauvegardée - Lecture ID: ${_currentLecture!.id}',
         name: 'VideoPlayerScreen',
@@ -412,7 +492,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       developer.log(
         '❌ ERREUR SAUVEGARDE:\n'
         '   - Lecture ID: ${_currentLecture?.id}\n'
-        '   - Position: ${_controller!.value.position.inSeconds}s\n'
+        '   - Position: ${_position.inSeconds}s\n'
         '   - Erreur: $e',
         error: e,
         stackTrace: stackTrace,
@@ -425,9 +505,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     if (_currentLecture == null) return;
 
     try {
-      final completeLectureUseCase = ref.read(completeLectureUseCaseProvider);
-      final currentPosition = _controller?.value.position.inSeconds ?? 0;
-      
+      final completeLectureUseCase = _completeLectureUseCase;
+      if (completeLectureUseCase == null) return;
+      final currentPosition = _position.inSeconds;
+
       developer.log(
         '🏁 Marquage lecture terminée:'
         '   - Lecture ID: ${_currentLecture!.id}\n'
@@ -435,36 +516,49 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         '   - Date/heure de fin: ${DateTime.now()}',
         name: 'VideoPlayerScreen',
       );
-      
+
       await completeLectureUseCase.execute(
         lectureId: _currentLecture!.id,
         finalDuration: currentPosition, // Position où l'utilisateur a quitté
       );
-      
-      developer.log('✅ Vidéo marquée comme terminée avec date/heure de fermeture', name: 'VideoPlayerScreen');
+
+      developer.log(
+        '✅ Vidéo marquée comme terminée avec date/heure de fermeture',
+        name: 'VideoPlayerScreen',
+      );
     } catch (e) {
-      developer.log('❌ Erreur lors de la finalisation: $e',
-          name: 'VideoPlayerScreen');
+      developer.log(
+        '❌ Erreur lors de la finalisation: $e',
+        name: 'VideoPlayerScreen',
+      );
     }
   }
 
+  void _seekTo(Duration position) {
+    _lastVideoPosition = position.inSeconds;
+    setState(() => _position = position);
+    unawaited(_controller!.seekTo(seconds: position.inMilliseconds / 1000));
+  }
+
   void _seekBackward() {
-    final currentPosition = _controller!.value.position;
+    final currentPosition = _position;
     final newPosition = currentPosition - const Duration(seconds: 15);
-    _controller!.seekTo(newPosition > Duration.zero ? newPosition : Duration.zero);
+    _seekTo(newPosition > Duration.zero ? newPosition : Duration.zero);
   }
 
   void _seekForward() {
-    final currentPosition = _controller!.value.position;
+    final currentPosition = _position;
     final duration = _controller!.metadata.duration;
     final newPosition = currentPosition + const Duration(seconds: 15);
-    _controller!.seekTo(newPosition < duration ? newPosition : duration);
+    _seekTo(newPosition < duration ? newPosition : duration);
   }
 
   int _timeToSeconds(String time) {
     final parts = time.split(':');
     if (parts.length == 3) {
-      return int.parse(parts[0]) * 3600 + int.parse(parts[1]) * 60 + int.parse(parts[2]);
+      return int.parse(parts[0]) * 3600 +
+          int.parse(parts[1]) * 60 +
+          int.parse(parts[2]);
     } else if (parts.length == 2) {
       return int.parse(parts[0]) * 60 + int.parse(parts[1]);
     }
@@ -476,7 +570,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     final seconds = duration.inSeconds.remainder(60);
-    
+
     if (hours > 0) {
       return '${twoDigits(hours)}:${twoDigits(minutes)}:${twoDigits(seconds)}';
     }
@@ -493,9 +587,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(
-                color: Setting.primaryColor,
-              ),
+              CircularProgressIndicator(color: Setting.primaryColor),
               const SizedBox(height: 16),
               const Text(
                 'Chargement de la vidéo...',
@@ -509,194 +601,211 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Player YouTube
-          Center(
-            child: YoutubePlayer(
-              controller: _controller!,
-              showVideoProgressIndicator: false,
-              onReady: () {
-                setState(() {
-                  _isPlaying = true;
-                });
-                
-                // Reprendre où l'utilisateur s'était arrêté (maintenant que le player est prêt)
-                if (_lastVideoPosition > 0 && !widget.startFromBeginning) {
-                  developer.log('⏩ SEEK TO (onReady): ${_lastVideoPosition}s', name: 'VideoPlayerScreen');
-                  // Petit délai pour s'assurer que le player est complètement prêt
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    if (mounted && _controller != null) {
-                      _controller!.seekTo(Duration(seconds: _lastVideoPosition));
-                      developer.log('✅ SEEK EFFECTUE: ${_lastVideoPosition}s', name: 'VideoPlayerScreen');
-                    }
-                  });
-                } else {
-                  developer.log('⏭️ PAS DE SEEK - Lecture depuis le début (onReady)', name: 'VideoPlayerScreen');
-                }
-              },
-            ),
-          ),
+      body: SizedBox.expand(
+        child: YoutubePlayer(
+          controller: _controller!,
+          autoFullScreen: false,
+          enableFullScreenOnVerticalDrag: false,
+          builder: (context, player, controller) => Stack(
+            fit: StackFit.expand,
+            children: [
+              player,
 
-          // Zone de tap pour afficher/masquer les contrôles
-          GestureDetector(
-            onTap: _toggleControls,
-            behavior: HitTestBehavior.translucent,
-            child: Container(
-              color: Colors.transparent,
-            ),
-          ),
+              // Zone de tap pour afficher/masquer les contrôles
+              GestureDetector(
+                onTap: _toggleControls,
+                behavior: HitTestBehavior.translucent,
+                child: Container(color: Colors.transparent),
+              ),
 
-          // Contrôles personnalisés
-          if (_isControlsVisible)
-            AnimatedOpacity(
-              opacity: _isControlsVisible ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.7),
-                      Colors.transparent,
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.7),
-                    ],
-                    stops: const [0.0, 0.3, 0.7, 1.0],
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Header avec titre et bouton fermer
-                    SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.movieTitle,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  if (widget.content.title.isNotEmpty)
-                                    Text(
-                                      widget.content.title,
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    )
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ],
-                        ),
+              // Contrôles personnalisés
+              if (_isControlsVisible)
+                AnimatedOpacity(
+                  opacity: _isControlsVisible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.7),
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.7),
+                        ],
+                        stops: const [0.0, 0.3, 0.7, 1.0],
                       ),
                     ),
-
-                    // Contrôles centraux
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Retour 15s
-                        IconButton(
-                          icon: const Icon(Icons.replay_10, color: Colors.white, size: 48),
-                          onPressed: _seekBackward,
-                        ),
-                        const SizedBox(width: 32),
-                        // Play/Pause
-                        IconButton(
-                          icon: Icon(
-                            _isPlaying ? Icons.pause : Icons.play_arrow,
-                            color: Colors.white,
-                            size: 64,
-                          ),
-                          onPressed: () {
-                            if (_isPlaying) {
-                              _controller!.pause();
-                            } else {
-                              _controller!.play();
-                            }
-                          },
-                        ),
-                        const SizedBox(width: 32),
-                        // Avance 15s
-                        IconButton(
-                          icon: const Icon(Icons.forward_10, color: Colors.white, size: 48),
-                          onPressed: _seekForward,
-                        ),
-                      ],
-                    ),
-
-                    // Barre de progression et temps
-                    SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            // Barre de progression
-                            SliderTheme(
-                              data: SliderThemeData(
-                                trackHeight: 3,
-                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                                overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-                                activeTrackColor: Setting.primaryColor,
-                                inactiveTrackColor: Colors.white.withOpacity(0.3),
-                                thumbColor: Setting.primaryColor,
-                                overlayColor: Setting.primaryColor.withOpacity(0.3),
-                              ),
-                              child: Slider(
-                                value: _controller!.value.position.inSeconds.toDouble().clamp(
-                                  0.0,
-                                  _controller!.metadata.duration.inSeconds.toDouble().clamp(1.0, double.infinity),
-                                ),
-                                min: 0.0,
-                                max: _controller!.metadata.duration.inSeconds.toDouble().clamp(1.0, double.infinity),
-                                onChanged: (value) {
-                                  _controller!.seekTo(Duration(seconds: value.toInt()));
-                                },
-                              ),
-                            ),
-                            // Temps
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        // Header avec titre et bouton fermer
+                        SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
                               children: [
-                                Text(
-                                  _formatDuration(_controller!.value.position),
-                                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.movieTitle,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (widget.content.title.isNotEmpty)
+                                        Text(
+                                          widget.content.title,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                                Text(
-                                  _formatDuration(_controller!.metadata.duration),
-                                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                  onPressed: () => Navigator.of(context).pop(),
                                 ),
                               ],
                             ),
+                          ),
+                        ),
+
+                        // Contrôles centraux
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Retour 15s
+                            IconButton(
+                              icon: const Icon(
+                                Icons.replay_10,
+                                color: Colors.white,
+                                size: 48,
+                              ),
+                              onPressed: _seekBackward,
+                            ),
+                            const SizedBox(width: 32),
+                            // Play/Pause
+                            IconButton(
+                              icon: Icon(
+                                _isPlaying ? Icons.pause : Icons.play_arrow,
+                                color: Colors.white,
+                                size: 64,
+                              ),
+                              onPressed: () {
+                                if (_isPlaying) {
+                                  unawaited(_controller!.pauseVideo());
+                                } else {
+                                  unawaited(_controller!.playVideo());
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 32),
+                            // Avance 15s
+                            IconButton(
+                              icon: const Icon(
+                                Icons.forward_10,
+                                color: Colors.white,
+                                size: 48,
+                              ),
+                              onPressed: _seekForward,
+                            ),
                           ],
                         ),
-                      ),
+
+                        // Barre de progression et temps
+                        SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                // Barre de progression
+                                SliderTheme(
+                                  data: SliderThemeData(
+                                    trackHeight: 3,
+                                    thumbShape: const RoundSliderThumbShape(
+                                      enabledThumbRadius: 6,
+                                    ),
+                                    overlayShape: const RoundSliderOverlayShape(
+                                      overlayRadius: 12,
+                                    ),
+                                    activeTrackColor: Setting.primaryColor,
+                                    inactiveTrackColor: Colors.white.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    thumbColor: Setting.primaryColor,
+                                    overlayColor: Setting.primaryColor
+                                        .withValues(alpha: 0.3),
+                                  ),
+                                  child: Slider(
+                                    value: _position.inSeconds.toDouble().clamp(
+                                      0.0,
+                                      _controller!.metadata.duration.inSeconds
+                                          .toDouble()
+                                          .clamp(1.0, double.infinity),
+                                    ),
+                                    min: 0.0,
+                                    max: _controller!
+                                        .metadata
+                                        .duration
+                                        .inSeconds
+                                        .toDouble()
+                                        .clamp(1.0, double.infinity),
+                                    onChanged: (value) {
+                                      _seekTo(Duration(seconds: value.toInt()));
+                                    },
+                                  ),
+                                ),
+                                // Temps
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _formatDuration(_position),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatDuration(
+                                        _controller!.metadata.duration,
+                                      ),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

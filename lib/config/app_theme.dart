@@ -3,7 +3,6 @@ import 'package:wouritv/config/setting.dart';
 
 /// Configuration des thèmes de l'application
 class AppTheme {
-  
   // Couleurs communes
   static const Color googleColor = Color(0xFFDB4437); // Rouge Google
   static const Color facebookColor = Color(0xFF1877F2);
@@ -25,7 +24,7 @@ class AppTheme {
       onSurface: Colors.black,
       onError: Colors.white,
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: const AppBarThemeData(
       backgroundColor: Setting.white,
       foregroundColor: Setting.bgColor,
       elevation: 0,
@@ -45,9 +44,7 @@ class AppTheme {
         backgroundColor: Setting.primaryColor,
         foregroundColor: Setting.white,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         textStyle: const TextStyle(
           fontFamily: 'Candara',
           fontSize: 16,
@@ -58,13 +55,10 @@ class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: Setting.primaryColor,
-        textStyle: const TextStyle(
-          fontFamily: 'Candara',
-          fontSize: 14,
-        ),
+        textStyle: const TextStyle(fontFamily: 'Candara', fontSize: 14),
       ),
     ),
-    inputDecorationTheme: InputDecorationTheme(
+    inputDecorationTheme: InputDecorationThemeData(
       border: const OutlineInputBorder(),
       enabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.grey.shade400),
@@ -84,14 +78,9 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
-    dividerTheme: DividerThemeData(
-      color: Colors.grey.shade300,
-      thickness: 1,
-    ),
+    dividerTheme: DividerThemeData(color: Colors.grey.shade300, thickness: 1),
   );
 
   /// Thème sombre
@@ -111,7 +100,7 @@ class AppTheme {
       onSurface: Colors.white,
       onError: Colors.white,
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: const AppBarThemeData(
       backgroundColor: Color(0xFF1E1E1E),
       foregroundColor: Colors.white,
       elevation: 0,
@@ -131,9 +120,7 @@ class AppTheme {
         backgroundColor: const Color(0xFF64B5F6),
         foregroundColor: Colors.black,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         textStyle: const TextStyle(
           fontFamily: 'Candara',
           fontSize: 16,
@@ -144,13 +131,10 @@ class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: const Color(0xFF64B5F6),
-        textStyle: const TextStyle(
-          fontFamily: 'Candara',
-          fontSize: 14,
-        ),
+        textStyle: const TextStyle(fontFamily: 'Candara', fontSize: 14),
       ),
     ),
-    inputDecorationTheme: InputDecorationTheme(
+    inputDecorationTheme: InputDecorationThemeData(
       border: const OutlineInputBorder(),
       enabledBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.grey.shade700),
@@ -170,14 +154,9 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: const Color(0xFF1E1E1E),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
-    dividerTheme: DividerThemeData(
-      color: Colors.grey.shade700,
-      thickness: 1,
-    ),
+    dividerTheme: DividerThemeData(color: Colors.grey.shade700, thickness: 1),
   );
 
   /// Méthode utilitaire pour obtenir les couleurs en fonction du mode
@@ -194,7 +173,8 @@ class AppTheme {
   }
 
   static Color getCardColor(BuildContext context) {
-    return Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    return Theme.of(context).cardTheme.color ??
+        Theme.of(context).colorScheme.surface;
   }
 
   static Color getDividerColor(BuildContext context) {

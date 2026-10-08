@@ -224,7 +224,8 @@ void main() {
       
       final uri = Uri.parse(redirectUrl);
       expect(uri.scheme, equals('io.supabase.wouritv'));
-      expect(uri.path, equals('/login-callback/'));
+      expect(uri.host, equals('login-callback'));
+      expect(uri.path, equals('/'));
     });
 
     test('devrait gérer différents types de callbacks', () {

@@ -42,7 +42,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      
       await _authService.updateUserMetadata(
         metadata: {
           'name': _nameController.text,
@@ -52,7 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(
+          SnackBar(
             content: Text(AppLocalizations.of(context)!.profil_ok),
             backgroundColor: Colors.green,
           ),
@@ -85,7 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         content: TextField(
           controller: passwordController,
           obscureText: true,
-          decoration:  InputDecoration(
+          decoration: InputDecoration(
             labelText: AppLocalizations.of(context)!.pwd_new,
             border: OutlineInputBorder(),
           ),
@@ -142,44 +141,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return '${packageInfo.version} (${packageInfo.buildNumber})';
     } catch (e) {
       return 'N/A';
-    }
-  }
-
-  Future<void> _signOut() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.logout),
-        content: Text(AppLocalizations.of(context)!.logout_desc),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(AppLocalizations.of(context)!.bt_cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(AppLocalizations.of(context)!.bt_logout),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      await _authService.signOut();
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
 
@@ -244,7 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              decoration:  InputDecoration(
+              decoration: InputDecoration(
                 labelText: AppLocalizations.of(context)!.txt_phone,
                 prefixIcon: const Icon(Icons.phone),
                 border: const OutlineInputBorder(),
@@ -260,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: _isLoading
                   ? const CircularProgressIndicator()
-                  :  Text(AppLocalizations.of(context)!.profile_update),
+                  : Text(AppLocalizations.of(context)!.profile_update),
             ),
             const SizedBox(height: 16),
 
@@ -270,7 +231,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child:  Text(AppLocalizations.of(context)!.txt_pwd),
+              child: Text(AppLocalizations.of(context)!.txt_pwd),
             ),
             const SizedBox(height: 32),
 
@@ -278,7 +239,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (user?.createdAt != null) ...[
               Text(
                 AppLocalizations.of(context)!.txt_cpte,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               ListTile(
@@ -293,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: FutureBuilder<String>(
                   future: _getAppVersion(),
                   builder: (context, snapshot) {
-                  return Text(snapshot.data ?? 'Loading...');
+                    return Text(snapshot.data ?? 'Loading...');
                   },
                 ),
               ),
