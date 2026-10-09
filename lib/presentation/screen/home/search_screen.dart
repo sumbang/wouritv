@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:wouritv/config/providers.dart';
-import 'package:wouritv/config/setting.dart';
 import 'package:wouritv/domain/entitie/movie_entity.dart';
 import 'package:wouritv/l10n/app_localizations.dart';
 import 'package:wouritv/presentation/component/widget/search_input.dart';
 import 'package:wouritv/presentation/screen/movie/movie_detail_screen.dart';
+
 import 'dart:developer' as developer;
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -20,7 +20,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchFocusNode = FocusNode();
   List<MovieEntity> _searchResults = [];
   bool _isSearching = false;
-  
+
   // Contenu par défaut
   List<MovieEntity>? _popularSeries;
   List<MovieEntity>? _popularMovies;
@@ -70,7 +70,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         });
       }
     } catch (e) {
-      developer.log('Erreur lors du chargement du contenu par défaut: $e', name: 'SearchScreen');
+      developer.log(
+        'Erreur lors du chargement du contenu par défaut: $e',
+        name: 'SearchScreen',
+      );
       if (mounted) {
         setState(() {
           _isLoadingDefault = false;
@@ -143,9 +146,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildDefaultContent(AppLocalizations l10n) {
     if (_isLoadingDefault) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return SingleChildScrollView(
@@ -154,36 +155,30 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         children: [
           // Séries populaires
           if (_popularSeries != null && _popularSeries!.isNotEmpty)
-            _buildSection(
-              title: l10n.popular_series,
-              movies: _popularSeries!,
-            ),
-          
+            _buildSection(title: l10n.popular_series, movies: _popularSeries!),
+
           const SizedBox(height: 24),
-          
+
           // Films populaires
           if (_popularMovies != null && _popularMovies!.isNotEmpty)
-            _buildSection(
-              title: l10n.popular_movies,
-              movies: _popularMovies!,
-            ),
-          
+            _buildSection(title: l10n.popular_movies, movies: _popularMovies!),
+
           const SizedBox(height: 24),
-          
+
           // Derniers ajouts
           if (_userList != null && _userList!.isNotEmpty)
-            _buildSection(
-              title: l10n.latest_additions,
-              movies: _userList!,
-            ),
-          
+            _buildSection(title: l10n.latest_additions, movies: _userList!),
+
           const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildSection({required String title, required List<MovieEntity> movies}) {
+  Widget _buildSection({
+    required String title,
+    required List<MovieEntity> movies,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -191,10 +186,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 12),
@@ -281,9 +273,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildSearchResults(AppLocalizations l10n) {
     if (_isSearching) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_searchResults.isEmpty) {
@@ -291,11 +281,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search_off,
-              size: 80,
-              color: Colors.grey.shade400,
-            ),
+            Icon(Icons.search_off, size: 80, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
               l10n.search_empty,

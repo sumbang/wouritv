@@ -93,16 +93,11 @@ class GlobalTranslations {
 
    Future<Null> setNewLanguage1(String language) async {
 
-    _locale = Locale(language, ""); bool saveInPrefs = false;
+    _locale = Locale(language, "");
 
     // Load the language strings
     String jsonContent = await rootBundle.loadString("locale/i18n_${_locale!.languageCode}.json");
     _localizedValues = json.decode(jsonContent);
-
-    // If we are asked to save the new language in the application preferences
-    if (saveInPrefs){
-      await setPreferredLanguage(language);
-    }
 
     // If there is a callback to invoke to notify that a language has changed
     if (_onLocaleChangedCallback != null){

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:io';
 
 /// Tests unitaires pour SupabaseVideoService
 /// 
@@ -9,21 +9,16 @@ import 'package:hive_flutter/hive_flutter.dart';
 /// Pour des tests d'intégration complets avec Supabase, un environnement de test
 /// avec une vraie instance Supabase serait nécessaire.
 void main() {
+  late Directory cacheDirectory;
+
   setUpAll(() async {
-    // Initialiser Hive pour les tests de cache
-    try {
-      await Hive.initFlutter();
-    } catch (e) {
-      // Hive déjà initialisé
-    }
+    cacheDirectory = await Directory.systemTemp.createTemp('wouritv_cache_test_');
+    Hive.init(cacheDirectory.path);
   });
 
   tearDownAll(() async {
-    try {
-      await Hive.close();
-    } catch (e) {
-      // Ignorer les erreurs de fermeture
-    }
+    await Hive.close();
+    await cacheDirectory.delete(recursive: true);
   });
 
   group('SupabaseVideoService - Latest Movies', () {

@@ -36,7 +36,7 @@ class _AuthStateWidgetState extends State<AuthStateWidget> {
     // Écouter les changements d'authentification
     _authService.authStateChanges.listen((event) {
       developer.log(
-        'AuthStateChange - Event: ${event.event}, User: ${event.session?.user?.id ?? "null"}, Email: ${event.session?.user?.email ?? "N/A"}',
+        'AuthStateChange - Event: ${event.event}, User: ${event.session?.user.id ?? "null"}, Email: ${event.session?.user.email ?? "N/A"}',
         name: 'AuthGate',
       );
       

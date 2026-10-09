@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -94,7 +93,7 @@ Future<void> main() async {
     
     await Supabase.initialize(
       url: supabaseUrl,
-      anonKey: supabaseKey,
+      publishableKey: supabaseKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
       ),
@@ -120,6 +119,7 @@ Future<void> main() async {
 }
 
 class MyApp extends StatefulHookConsumerWidget {
+  const MyApp({super.key});
   @override
   MyAppState createState() => MyAppState();
 }
@@ -129,7 +129,6 @@ class MyAppState extends ConsumerState<MyApp> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   @override
   void initState()  {

@@ -9,6 +9,7 @@ import 'package:wouritv/l10n/app_localizations.dart';
 import 'package:wouritv/presentation/screen/home/all_movies_screen.dart';
 import 'package:wouritv/presentation/screen/home/profile_screen.dart';
 import 'package:wouritv/presentation/screen/movie/movie_detail_screen.dart';
+
 import 'dart:developer' as developer;
 
 import 'package:wouritv/presentation/screen/home/search_screen.dart';
@@ -32,7 +33,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _isLoadingMovies = true;
   bool _isLoadingRecommended = true;
   bool _isLoadingWatched = true;
-  bool _isLoadingRandom = true;
 
   @override
   void initState() {
@@ -45,23 +45,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Future<void> _loadLatestMovies() async {
     try {
-      developer.log('🎬 Début du chargement des derniers films', name: 'DashboardScreen');
-      
+      developer.log(
+        '🎬 Début du chargement des derniers films',
+        name: 'DashboardScreen',
+      );
+
       // Vérifier la connexion Supabase
       final supabaseClient = Supabase.instance.client;
-      developer.log('📡 URL Supabase: ${supabaseClient.rest.url}', name: 'DashboardScreen');
-      developer.log('🔑 Auth status: ${supabaseClient.auth.currentUser != null ? "Connecté" : "Non connecté"}', name: 'DashboardScreen');
-      
+      developer.log(
+        '📡 URL Supabase: ${supabaseClient.rest.url}',
+        name: 'DashboardScreen',
+      );
+      developer.log(
+        '🔑 Auth status: ${supabaseClient.auth.currentUser != null ? "Connecté" : "Non connecté"}',
+        name: 'DashboardScreen',
+      );
+
       final getLatestMoviesUseCase = ref.read(getLatestMoviesUseCaseProvider);
       developer.log('✅ UseCase récupéré', name: 'DashboardScreen');
-      
+
       final movies = await getLatestMoviesUseCase.execute();
-      developer.log('📊 Nombre de films récupérés: ${movies.length}', name: 'DashboardScreen');
-      
+      developer.log(
+        '📊 Nombre de films récupérés: ${movies.length}',
+        name: 'DashboardScreen',
+      );
+
       if (movies.isNotEmpty) {
-        developer.log('🎥 Premier film: ${movies.first.title}', name: 'DashboardScreen');
+        developer.log(
+          '🎥 Premier film: ${movies.first.title}',
+          name: 'DashboardScreen',
+        );
       }
-      
+
       if (mounted) {
         setState(() {
           _latestMovies = movies;
@@ -76,7 +91,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         stackTrace: stackTrace,
         name: 'DashboardScreen',
       );
-      
+
       // Afficher une SnackBar avec l'erreur
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -86,7 +101,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             duration: const Duration(seconds: 5),
           ),
         );
-        
+
         setState(() {
           _isLoadingMovies = false;
         });
@@ -96,27 +111,41 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Future<void> _loadRandomMovies() async {
     try {
-      developer.log('🎬 Début du chargement des films aléatoires', name: 'DashboardScreen');
-      
+      developer.log(
+        '🎬 Début du chargement des films aléatoires',
+        name: 'DashboardScreen',
+      );
+
       // Vérifier la connexion Supabase
       final supabaseClient = Supabase.instance.client;
-      developer.log('📡 URL Supabase: ${supabaseClient.rest.url}', name: 'DashboardScreen');
-      developer.log('🔑 Auth status: ${supabaseClient.auth.currentUser != null ? "Connecté" : "Non connecté"}', name: 'DashboardScreen');
-      
+      developer.log(
+        '📡 URL Supabase: ${supabaseClient.rest.url}',
+        name: 'DashboardScreen',
+      );
+      developer.log(
+        '🔑 Auth status: ${supabaseClient.auth.currentUser != null ? "Connecté" : "Non connecté"}',
+        name: 'DashboardScreen',
+      );
+
       final getRandomsMoviesUseCase = ref.read(getRandomMoviesUseCaseProvider);
       developer.log('✅ UseCase récupéré', name: 'DashboardScreen');
-      
+
       final movies = await getRandomsMoviesUseCase.execute();
-      developer.log('📊 Nombre de films récupérés: ${movies.length}', name: 'DashboardScreen');
-      
+      developer.log(
+        '📊 Nombre de films récupérés: ${movies.length}',
+        name: 'DashboardScreen',
+      );
+
       if (movies.isNotEmpty) {
-        developer.log('🎥 Premier film: ${movies.first.title}', name: 'DashboardScreen');
+        developer.log(
+          '🎥 Premier film: ${movies.first.title}',
+          name: 'DashboardScreen',
+        );
       }
-      
+
       if (mounted) {
         setState(() {
           _randomMovies = movies;
-          _isLoadingRandom = false;
         });
         developer.log('✅ État mis à jour avec succès', name: 'DashboardScreen');
       }
@@ -127,7 +156,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         stackTrace: stackTrace,
         name: 'DashboardScreen',
       );
-      
+
       // Afficher une SnackBar avec l'erreur
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -137,23 +166,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             duration: const Duration(seconds: 5),
           ),
         );
-        
-        setState(() {
-          _isLoadingRandom = false;
-        });
+
+        setState(() {});
       }
     }
   }
 
   Future<void> _loadRecommendedMovies() async {
     try {
-      developer.log('🎬 Début du chargement des films recommandés', name: 'DashboardScreen');
-      
-      final getRecommendedMoviesUseCase = ref.read(getRecommendedMoviesUseCaseProvider);
+      developer.log(
+        '🎬 Début du chargement des films recommandés',
+        name: 'DashboardScreen',
+      );
+
+      final getRecommendedMoviesUseCase = ref.read(
+        getRecommendedMoviesUseCaseProvider,
+      );
       final movies = await getRecommendedMoviesUseCase.execute(limit: 20);
-      
-      developer.log('📊 Nombre de films recommandés: ${movies.length}', name: 'DashboardScreen');
-      
+
+      developer.log(
+        '📊 Nombre de films recommandés: ${movies.length}',
+        name: 'DashboardScreen',
+      );
+
       if (mounted) {
         setState(() {
           _recommendedMovies = movies;
@@ -167,7 +202,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         stackTrace: stackTrace,
         name: 'DashboardScreen',
       );
-      
+
       if (mounted) {
         setState(() {
           _isLoadingRecommended = false;
@@ -178,13 +213,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Future<void> _loadWatchedMovies() async {
     try {
-      developer.log('🎬 Début du chargement des films regardes', name: 'DashboardScreen');
-      
-      final getWatchedMoviesUseCase = ref.read(getMostWatchedMoviesUseCaseProvider);
+      developer.log(
+        '🎬 Début du chargement des films regardes',
+        name: 'DashboardScreen',
+      );
+
+      final getWatchedMoviesUseCase = ref.read(
+        getMostWatchedMoviesUseCaseProvider,
+      );
       final movies = await getWatchedMoviesUseCase.execute(limit: 20);
-      
-      developer.log('📊 Nombre de films regardés: ${movies.length}', name: 'DashboardScreen');
-      
+
+      developer.log(
+        '📊 Nombre de films regardés: ${movies.length}',
+        name: 'DashboardScreen',
+      );
+
       if (mounted) {
         setState(() {
           _watchedMovies = movies;
@@ -198,7 +241,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         stackTrace: stackTrace,
         name: 'DashboardScreen',
       );
-      
+
       if (mounted) {
         setState(() {
           _isLoadingWatched = false;
@@ -207,17 +250,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final user = _authService.currentUser;
     final l10n = AppLocalizations.of(context)!;
 
     // Récupérer le nom complet ou l'email
-    String userName = user?.userMetadata?['full_name'] as String? ?? 
-                     user?.email?.split('@')[0] ?? 
-                     'User';
-    
+    String userName =
+        user?.userMetadata?['full_name'] as String? ??
+        user?.email?.split('@')[0] ??
+        'User';
+
     // Tronquer le nom s'il fait plus de 10 caractères
     if (userName.length > 10) {
       userName = '${userName.substring(0, 10)}...';
@@ -305,7 +348,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildHomeTab(User? user) {
-
     final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
@@ -330,7 +372,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     listType: MovieListType.popular,
                     title: l10n.popular_movies,
                     fetchMovies: ({required int limit}) async {
-                      final useCase = ref.read(getMostWatchedMoviesUseCaseProvider);
+                      final useCase = ref.read(
+                        getMostWatchedMoviesUseCaseProvider,
+                      );
                       return await useCase.execute(limit: limit);
                     },
                   ),
@@ -372,7 +416,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     listType: MovieListType.recommended,
                     title: l10n.recommended_for_you,
                     fetchMovies: ({required int limit}) async {
-                      final useCase = ref.read(getRecommendedMoviesUseCaseProvider);
+                      final useCase = ref.read(
+                        getRecommendedMoviesUseCaseProvider,
+                      );
                       return await useCase.execute(limit: limit);
                     },
                   ),
@@ -395,7 +441,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Setting.primaryColor.withOpacity(0.8),
+              Setting.primaryColor.withValues(alpha: 0.8),
               Setting.primaryColor,
             ],
           ),
@@ -415,7 +461,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Setting.primaryColor.withOpacity(0.8),
+              Setting.primaryColor.withValues(alpha: 0.8),
               Setting.primaryColor,
             ],
           ),
@@ -464,7 +510,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
@@ -475,46 +521,34 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         child: Stack(
                           children: [
                             // Image de fond si disponible
-                            if (movie.banniere != null)
-                              Positioned.fill(
-                                child: Image.network(
-                                  movie.banniere!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Setting.primaryColor.withOpacity(0.8),
-                                          Setting.primaryColor,
-                                        ],
+                            Positioned.fill(
+                              child: Image.network(
+                                movie.banniere,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Setting.primaryColor.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            Setting.primaryColor,
+                                          ],
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.movie,
+                                          size: 60,
+                                          color: Colors.white54,
+                                        ),
                                       ),
                                     ),
-                                    child: const Center(
-                                      child: Icon(Icons.movie, size: 60, color: Colors.white54),
-                                    ),
-                                  ),
-                                ),
-                              )
-                            else
-                              Positioned.fill(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Setting.primaryColor.withOpacity(0.8),
-                                        Setting.primaryColor,
-                                      ],
-                                    ),
-                                  ),
-                                  child: const Center(
-                                    child: Icon(Icons.movie, size: 60, color: Colors.white54),
-                                  ),
-                                ),
                               ),
+                            ),
                             // Overlay léger pour meilleure lisibilité
                             Positioned.fill(
                               child: Container(
@@ -524,7 +558,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Colors.transparent,
-                                      Colors.black.withOpacity(0.1),
+                                      Colors.black.withValues(alpha: 0.1),
                                     ],
                                   ),
                                 ),
@@ -540,7 +574,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Text(
-                      _capitalizeWords(movie.title ?? 'Sans titre'),
+                      _capitalizeWords(movie.title),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -561,10 +595,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   /// Capitalise la première lettre de chaque mot
   String _capitalizeWords(String text) {
     if (text.isEmpty) return text;
-    return text.split(' ').map((word) {
-      if (word.isEmpty) return word;
-      return word[0].toUpperCase() + word.substring(1).toLowerCase();
-    }).join(' ');
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
   }
 
   Widget _buildMovieSection({
@@ -590,10 +627,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              TextButton(
-                onPressed: onSeeAll,
-                child: Text(l10n.see_all),
-              ),
+              TextButton(onPressed: onSeeAll, child: Text(l10n.see_all)),
             ],
           ),
         ),
@@ -603,104 +637,96 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: isLoading
               ? const Center(child: CircularProgressIndicator())
               : (movies == null || movies.isEmpty)
-                  ? Center(
-                      child: Text(
-                        l10n.no_movie,
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                    )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: movies.length,
-                      itemBuilder: (context, index) {
-                        final movie = movies[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MovieDetailScreen(movie: movie),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: 140,
-                            margin: const EdgeInsets.only(right: 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                // Image carrée avec bords arrondis
-                                Container(
-                                  width: 140,
-                                  height: 140,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: movie.banniere != null
-                                        ? Image.network(
-                                            movie.banniere!,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => Container(
-                                              decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  begin: Alignment.topCenter,
-                                                  end: Alignment.bottomCenter,
-                                                  colors: [
-                                                    Setting.primaryColor.withOpacity(0.8),
-                                                    Setting.primaryColor,
-                                                  ],
-                                                ),
-                                              ),
-                                              child: const Center(
-                                                child: Icon(Icons.movie, size: 40, color: Colors.white54),
-                                              ),
-                                            ),
-                                          )
-                                        : Container(
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment.topCenter,
-                                                end: Alignment.bottomCenter,
-                                                colors: [
-                                                  Setting.primaryColor.withOpacity(0.8),
-                                                  Setting.primaryColor,
-                                                ],
-                                              ),
-                                            ),
-                                            child: const Center(
-                                              child: Icon(Icons.movie, size: 40, color: Colors.white54),
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                // Titre centré en bas
-                                Text(
-                                  _capitalizeWords(movie.title ?? 'Sans titre'),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
+              ? Center(
+                  child: Text(
+                    l10n.no_movie,
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                )
+              : ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: movies.length,
+                  itemBuilder: (context, index) {
+                    final movie = movies[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MovieDetailScreen(movie: movie),
                           ),
                         );
                       },
-                    ),
+                      child: Container(
+                        width: 140,
+                        margin: const EdgeInsets.only(right: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Image carrée avec bords arrondis
+                            Container(
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  movie.banniere,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Setting.primaryColor.withValues(
+                                                alpha: 0.8,
+                                              ),
+                                              Setting.primaryColor,
+                                            ],
+                                          ),
+                                        ),
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.movie,
+                                            size: 40,
+                                            color: Colors.white54,
+                                          ),
+                                        ),
+                                      ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // Titre centré en bas
+                            Text(
+                              _capitalizeWords(movie.title),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
         ),
         const SizedBox(height: 24),
       ],
@@ -718,11 +744,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child:  Text(l10n.bt_cancel),
+            child: Text(l10n.bt_cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child:  Text(l10n.bt_logout),
+            child: Text(l10n.bt_logout),
           ),
         ],
       ),
@@ -730,7 +756,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     if (confirmed == true && mounted) {
       try {
-        developer.log('🚪 Début de la déconnexion depuis Dashboard', name: 'DashboardScreen');
+        developer.log(
+          '🚪 Début de la déconnexion depuis Dashboard',
+          name: 'DashboardScreen',
+        );
         await _authService.signOut();
         developer.log('✅ Déconnexion réussie', name: 'DashboardScreen');
 

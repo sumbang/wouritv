@@ -89,7 +89,7 @@ class SupabaseVideoService {
           .limit(limit * 2); // Prendre plus pour avoir de la marge
 
       if (response.isEmpty) {
-        return fetchRandomMovies(limit: limit);
+        return await fetchRandomMovies(limit: limit);
       }
 
       // Compter les recommandations par film
@@ -111,7 +111,7 @@ class SupabaseVideoService {
           .toList();
 
       if (sortedMovieIds.isEmpty) {
-        return fetchRandomMovies(limit: limit);
+        return await fetchRandomMovies(limit: limit);
       }
 
       // Deuxième requête : récupérer les détails des films (exclure premium)
@@ -128,7 +128,7 @@ class SupabaseVideoService {
       developer.log('✅ ${movies.length} films recommandés transformés', name: 'SupabaseVideoService');    
 
       if (movies.isEmpty) {
-        return fetchRandomMovies(limit: limit);
+        return await fetchRandomMovies(limit: limit);
       }
 
       // Mélanger aléatoirement pour varier l'affichage
@@ -138,7 +138,7 @@ class SupabaseVideoService {
       return movies;
     } catch (e) {
       developer.log('❌ Erreur dans fetchMostRecommendedMovies: $e', name: 'SupabaseVideoService');
-      return fetchRandomMovies(limit: limit);
+      return await fetchRandomMovies(limit: limit);
     }
   }
 
@@ -160,7 +160,7 @@ class SupabaseVideoService {
           .limit(1000); // Limiter pour éviter trop de données
 
       if (lectureResponse.isEmpty) {
-        return fetchRandomMovies(limit: limit);
+        return await fetchRandomMovies(limit: limit);
       }
 
       // Récupérer tous les contenus pour faire le lien idmovie -> movieId
@@ -201,7 +201,7 @@ class SupabaseVideoService {
           .toList();
 
       if (sortedMovieIds.isEmpty) {
-        return fetchRandomMovies(limit: limit);
+        return await fetchRandomMovies(limit: limit);
       }
 
       // Dernière requête : récupérer les détails des films (exclure premium)
@@ -216,7 +216,7 @@ class SupabaseVideoService {
           .toList();
 
       if (movies.isEmpty) {
-        return fetchRandomMovies(limit: limit);
+        return await fetchRandomMovies(limit: limit);
       }
 
       // Mélanger aléatoirement pour varier l'affichage
@@ -226,7 +226,7 @@ class SupabaseVideoService {
       return movies;
     } catch (e) {
       developer.log('❌ Erreur dans mostWatchingMovie: $e', name: 'SupabaseVideoService');
-      return fetchRandomMovies(limit: limit);
+      return await fetchRandomMovies(limit: limit);
     }
   }
 

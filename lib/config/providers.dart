@@ -1,5 +1,4 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:riverpod/riverpod.dart';
 import 'package:wouritv/data/api/supabase_movie_service.dart';
 import 'package:wouritv/data/api/premium_video_service.dart';
 import 'package:wouritv/data/repository/movie_repository_impl.dart';
