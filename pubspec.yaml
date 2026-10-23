@@ -97,6 +97,10 @@ flutter_launcher_icons:
 flutter:
   generate: true
 
+  # Les plugins iOS passent par CocoaPods (Podfile.lock, script Crashlytics)
+  config:
+    enable-swift-package-manager: false
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
