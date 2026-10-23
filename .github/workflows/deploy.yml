@@ -5,11 +5,17 @@ on:
     branches: [ master, main ]
     types: [ closed ]
   workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Plateforme à déployer'
+        type: choice
+        options: [ both, android, ios ]
+        default: both
 
 jobs:
   # Build Android APK/AAB
   build-android:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || (github.event_name == 'workflow_dispatch' && inputs.platform != 'ios')
     runs-on: ubuntu-latest
     
     steps:
@@ -84,7 +90,7 @@ jobs:
   
   # Build iOS IPA
   build-ios:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || (github.event_name == 'workflow_dispatch' && inputs.platform != 'android')
     runs-on: macos-latest
     
     steps:
