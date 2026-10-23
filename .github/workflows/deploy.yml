@@ -50,11 +50,11 @@ jobs:
       
       # Build APK for testing
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-number=$((GITHUB_RUN_NUMBER + 1000))
       
       # Build AAB for Play Store
       - name: Build AAB
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --build-number=$((GITHUB_RUN_NUMBER + 1000))
       
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -130,7 +130,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
         run: |
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign --build-number=$((GITHUB_RUN_NUMBER + 1000))
           
           AUTH_ARGS=(
             -allowProvisioningUpdates
