@@ -4,11 +4,12 @@ on:
   pull_request:
     branches: [ master, main ]
     types: [ closed ]
+  workflow_dispatch:
 
 jobs:
   # Build Android APK/AAB
   build-android:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     
     steps:
@@ -83,7 +84,7 @@ jobs:
   
   # Build iOS IPA
   build-ios:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: macos-latest
     
     steps:
