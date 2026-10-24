@@ -57,11 +57,25 @@ jobs:
       
       # Build APK for testing
       - name: Build APK
-        run: flutter build apk --release --build-number=$((GITHUB_RUN_NUMBER + 1000))
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "::error::Secrets SUPABASE_URL et SUPABASE_KEY requis"; exit 1
+          fi
+          flutter build apk --release --build-number=$((GITHUB_RUN_NUMBER + 1000)) --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_KEY="$SUPABASE_KEY"
       
       # Build AAB for Play Store
       - name: Build AAB
-        run: flutter build appbundle --release --build-number=$((GITHUB_RUN_NUMBER + 1000))
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "::error::Secrets SUPABASE_URL et SUPABASE_KEY requis"; exit 1
+          fi
+          flutter build appbundle --release --build-number=$((GITHUB_RUN_NUMBER + 1000)) --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_KEY="$SUPABASE_KEY"
       
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -136,8 +150,13 @@ jobs:
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          flutter build ios --release --no-codesign --build-number=$((GITHUB_RUN_NUMBER + 1000))
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "::error::Secrets SUPABASE_URL et SUPABASE_KEY requis"; exit 1
+          fi
+          flutter build ios --release --no-codesign --build-number=$((GITHUB_RUN_NUMBER + 1000)) --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_KEY="$SUPABASE_KEY"
           
           AUTH_ARGS=(
             -allowProvisioningUpdates
