@@ -56,7 +56,7 @@ dependencies:
   overlay_support: ^2.1.0
   path_provider: ^2.1.5
   percent_indicator: ^4.2.5
-  permission_handler: ^13.0.2
+  permission_handler: ^12.0.1
   intl: any
   upgrader: ^13.7.0
   fluttertoast: ^10.0.2
